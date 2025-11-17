@@ -1,45 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SneakerVault API</title>
-    <style>
-      body {
-        background: #0b0f1c;
-        color: #fff;
-        font-family: "Inter", sans-serif;
-        text-align: center;
-        padding: 2rem;
-      }
-      h1 {
-        color: #a855f7;
-      }
-      a {
-        color: #3b82f6;
-        display: block;
-        margin: 1rem 0;
-        text-decoration: none;
-      }
-      a:hover {
-        text-decoration: underline;
-      }
-      .box {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 10px;
-        padding: 20px;
-        max-width: 400px;
-        margin: 2rem auto;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Welcome to SneakerVault API</h1>
-    <div class="box">
-      <p>Available API endpoints:</p>
-      <a href="/api/team">GET /api/team</a>
-      <a href="/api/team/1">GET /api/team/:id</a>
-    </div>
-    <p>© 2025 SneakerVault</p>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <title>SneakerVault API</title>
+  <style>
+    body {
+      background: #0b0f1c;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px;
+    }
+    h1 {
+      font-size: 2.5rem;
+      color: #a855f7;
+    }
+    .box {
+      margin-top: 30px;
+      padding: 20px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 12px;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    a {
+      display: block;
+      margin: 12px 0;
+      color: #3b82f6;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>SneakerVault API</h1>
+
+  <div class="box">
+    <p>Available Endpoints:</p>
+
+    <a href="/api/sneakers">GET /api/sneakers</a>
+    <a href="/api/sneakers/1">GET /api/sneakers/:id</a>
+    <a href="/api/sneakers (POST)">POST /api/sneakers</a>
+  </div>
+
+  <p>© 2025 SneakerVault API</p>
+</body>
 </html>
