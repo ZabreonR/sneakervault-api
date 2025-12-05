@@ -9,100 +9,97 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-//MONGODB CONNECT
-mongoose.connect("mongodb+srv://zabreon_db_user:AuMhU6ZDr6cT6o0Q@cluster0.gpvy0sl.mongodb.net/")
-  .then(() => console.log("Connected to MongoDB"))
+// ------------------ MONGO CONNECTION ------------------
+// Uses environment variable on Render OR fallback local
+const mongoURI = process.env.MONGO_URI ||
+  "mongodb+srv://zabreon_db_user:AuMhU6ZDr6cT6o0Q@cluster0.gpvy0sl.mongodb.net/sneaker_db?retryWrites=true&w=majority";
+
+mongoose
+  .connect(mongoURI)
+  .then(() => console.log("Connected to MongoDB..."))
   .catch((err) => console.error("MongoDB connection error:", err));
 
-// MONGOOSE SCHEMA & MODEL
-const sneakerMongoSchema = new mongoose.Schema({
-  name: String,
-  brand: String,
-  price: Number,
-  condition: String,
-  release_year: Number,
-  image: String,
-});
+// Example schema (not used yet, but valid)
+const SneakerModel = mongoose.model(
+  "Sneaker",
+  new mongoose.Schema({
+    name: String,
+  })
+);
 
-const SneakerModel = mongoose.model("Sneaker", sneakerMongoSchema);
-
-// JOI VALIDATION MATCHED TO MONGO FIELDS
-const sneakerJoiSchema = Joi.object({
+// ------------------ VALIDATION SCHEMA ------------------
+const sneakerSchema = Joi.object({
+  id: Joi.number().integer().min(1).optional(),
   name: Joi.string().min(2).required(),
   brand: Joi.string().min(2).required(),
-  price: Joi.number().min(1).max(5000).required(),
-  condition: Joi.string().valid("New", "Like New", "Used").required(),
-  release_year: Joi.number().integer().min(1900).required(),
+  price: Joi.number().min(1).required(),
+  condition: Joi.string().min(2).required(),
+  release_year: Joi.number().min(1900).required(),
   image: Joi.string().min(2).required(),
 });
 
-// GET ROUTE
-app.get("/api/sneakers", async (req, res) => {
-  try {
-    const fromDB = await SneakerModel.find().lean();
-    if (fromDB.length > 0) {
-      return res.json(fromDB);
-    }
-    return res.json(sneakers);
-  } catch (err) {
-    console.error("Error fetching sneakers:", err);
-    res.status(500).json({ message: "Server error fetching sneakers" });
-  }
+// ------------------ GET ROUTE ------------------
+app.get("/api/sneakers", (req, res) => {
+  res.json(sneakers);
 });
 
-//POST (SAVE TO MONGO NOW PERSISTENT)
-app.post("/api/sneakers", async (req, res) => {
-  const { error, value } = sneakerJoiSchema.validate(req.body);
+// ------------------ POST ROUTE ------------------
+app.post("/api/sneakers", (req, res) => {
+  const { error, value } = sneakerSchema.validate(req.body);
+
   if (error) {
     return res.status(400).json({ message: error.details[0].message });
   }
 
-  try {
-    const saved = await SneakerModel.create(value);
-    return res.status(200).json(saved);
-  } catch (err) {
-    console.error("Error saving sneaker:", err);
-    res.status(500).json({ message: "Server error saving sneaker" });
-  }
+  const newSneaker = {
+    id: sneakers.length + 1,
+    ...value,
+  };
+
+  sneakers.push(newSneaker);
+
+  res.json({ success: true, sneaker: newSneaker });
 });
 
-// PUT (EDIT PERSISTS TO MONGO)
-app.put("/api/sneakers/:id", async (req, res) => {
-  const sneakerId = req.params.id;
+// ------------------ PUT ROUTE (EDIT) ------------------
+app.put("/api/sneakers/:id", (req, res) => {
+  const id = parseInt(req.params.id);
 
-  const { error, value } = sneakerJoiSchema.validate(req.body);
+  const index = sneakers.findIndex((s) => s.id === id);
+  if (index === -1) {
+    return res.status(404).json({ message: "Sneaker not found" });
+  }
+
+  const { error, value } = sneakerSchema.validate(req.body);
   if (error) {
     return res.status(400).json({ message: error.details[0].message });
   }
 
-  try {
-    const updated = await SneakerModel.findByIdAndUpdate(sneakerId, value, { new: true });
-    if (!updated) {
-      return res.status(404).json({ message: "Sneaker not found" });
-    }
-    return res.status(200).json(updated);
-  } catch (err) {
-    console.error("Error updating sneaker:", err);
-    res.status(500).json({ message: "Server error updating sneaker" });
-  }
+  const updatedSneaker = {
+    ...sneakers[index],
+    ...value,
+    id,
+  };
+
+  sneakers[index] = updatedSneaker;
+
+  return res.status(200).json(updatedSneaker);
 });
 
-//DELETE (ALSO PERSISTENT NOW)
-app.delete("/api/sneakers/:id", async (req, res) => {
-  const sneakerId = req.params.id;
+// ------------------ DELETE ROUTE ------------------
+app.delete("/api/sneakers/:id", (req, res) => {
+  const id = parseInt(req.params.id);
 
-  try {
-    const deleted = await SneakerModel.findByIdAndDelete(sneakerId);
-    if (!deleted) {
-      return res.status(404).json({ message: "Sneaker not found" });
-    }
-    return res.status(200).json({ success: true });
-  } catch (err) {
-    console.error("Error deleting sneaker:", err);
-    res.status(500).json({ message: "Server error deleting sneaker" });
+  const index = sneakers.findIndex((s) => s.id === id);
+  if (index === -1) {
+    return res.status(404).json({ message: "Sneaker not found" });
   }
+
+  sneakers.splice(index, 1);
+
+  return res.status(200).json({ success: true, message: "Sneaker deleted" });
 });
 
-//START SERVER
-const PORT = 3001;
-app.listen(PORT, () => console.log(`🚀 API running on http://localhost:${PORT}`));
+// ------------------ START SERVER ------------------
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => console.log(`API running on port ${PORT}`));
